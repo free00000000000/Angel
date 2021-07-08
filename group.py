@@ -5,6 +5,7 @@ from alert import Stock
 from log import setup_logger
 
 logger = setup_logger('group_logger', './data/log/group.log')
+to_bot = setup_logger('bot', './data/log/to_bot.log')
 
 class Group:
   def __init__(self) -> None:
@@ -70,7 +71,7 @@ class Group:
     self.stocks.to_csv(self.group_file, index_label='stock')
     self.record.to_csv(self.record_file, index_label='stock')
 
-    logger.info("End ")
+    to_bot.info("End ")
     
 
   def check_sell(self, year, month, day):

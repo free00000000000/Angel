@@ -7,7 +7,7 @@ from tqdm import tqdm
 from log import setup_logger
 
 logger = setup_logger('crawler_logger', './data/log/crawler.log')
-
+to_bot = setup_logger('bot', './data/log/to_bot.log')
 
 def get_stock_price(start, end, stock_no):
   data = []
@@ -45,7 +45,7 @@ def update_stock_price(stocks):
         new.to_csv(filename, index=False)
     except Exception as e:
       logger.error("{} |{}".format(e, stock_no))
-  logger.info("end")
+  logger.info("End ")
 
 
 
@@ -57,7 +57,8 @@ def get_revenue(year, month, category='sii'):
     print(filename, "ok")
     return False
   
-  logger.info("New revenue! {} ({}/{})".format(category ,year, month))
+  logger.info("New {}_{}_{} ".format(year, month, category))
+  to_bot.info("New {}_{}_{} ".format(year, month, category))
 
   url = "https://mops.twse.com.tw/server-java/FileDownLoad"
 
