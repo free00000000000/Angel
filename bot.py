@@ -4,6 +4,7 @@ from datetime import date
 import subprocess
 import json
 
+from group import Group
 from alert import show_alert
 from log import setup_logger
 logger = setup_logger('angel_logger', './data/log/angel.log')
@@ -14,18 +15,28 @@ with open('data/file/parm.json') as jf:
 TOKEN = parm['token']
 updater = Updater(token=TOKEN, use_context=True)
 
+def vaild_id(id):
+  return id in parm['vaild_id']
+
 def start(update, context):
   logger.warning(update.effective_chat.id)
   context.bot.send_message(chat_id=update.effective_chat.id, text="I'm a bot, please talk to me!")
 
-def caps(update, context):
-    text_caps = ' '.join(context.args).upper()
-    context.bot.send_message(chat_id=update.effective_chat.id, text=text_caps)
+def get_rev_highlight(update, context):
+  if not vaild_id(update.effective_chat.id): return
+  
+  try: 
+    year = int(context.args[0])
+    month = int(context.args[1])
+  except:
+    context.bot.send_message(chat_id=update.effective_chat.id, text="輸入錯誤！\n正確格式: /rev 年 月")
+    return
 
-def echo(update, context):
-  text = update.message.text
-  print(update.effective_chat.id)
-  context.bot.send_message(chat_id=update.effective_chat.id, text=text)
+  g = Group()
+  msg = g.revenue_highlight(year, month)
+  context.bot.send_message(chat_id=update.effective_chat.id, text=msg)
+
+
 
 
 def send_alert(context: CallbackContext):
@@ -48,11 +59,7 @@ dispatcher = updater.dispatcher
 start_handler = CommandHandler('start', start)
 dispatcher.add_handler(start_handler)
 
-# caps_handler = CommandHandler('caps', caps)
-# dispatcher.add_handler(caps_handler)
-
-# echo_handler = MessageHandler(Filters.text & (~Filters.command), echo)
-# dispatcher.add_handler(echo_handler)
+dispatcher.add_handler(CommandHandler('rev', get_rev_highlight))
 
 job = updater.job_queue
 # job_alert = job.run_repeating(send_alert, interval=5, first=0)

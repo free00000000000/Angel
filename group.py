@@ -1,5 +1,5 @@
-import logging
 import pandas as pd
+import os
 from revenue import get_target, by_stock, get_volume
 from alert import Stock
 from log import setup_logger
@@ -125,30 +125,97 @@ class Group:
     
     year_increase = by_stock(date, self.stocks.index, '營業收入-去年同月增減(%)', 'sii')
     month_increase = by_stock(date, self.stocks.index, '營業收入-上月比較增減(%)', 'sii')
+    rev = by_stock(date[:1], self.stocks.index, '營業收入-當月營收', 'sii')
+
+    year_prod = (year_increase/100+1).prod()
+    month_prod = (month_increase/100+1).prod()
+    increase_prod = pd.concat([year_prod, month_prod, year_prod*month_prod, rev.T], axis=1).round(2)
+    increase_prod.columns = ['year_prod', 'month_prod', 'prod', 'rev']
+    group_info = pd.concat([self.stocks, increase_prod], axis=1)
+    # tmp = group_info[(group_info['year_prob']<1)|(group_info['month_prob']<1)].sort_values('month_prob')
+    tmp = group_info.sort_values('prod')
+    # tmp = group_info[(group_info['increase']==1)].sort_values('prod')
     
-    avg = pd.concat([year_increase.mean(), month_increase.mean()], axis=1).round(2)
-    avg.columns = ['year_avg', 'month_avg']
-    group_info = pd.concat([self.stocks, avg], axis=1)
-    # tmp = group_info[(group_info['year_avg']<0)|(group_info['month_avg']<0)].sort_values('month_avg')
-    tmp = group_info[(group_info['increase']==0)].sort_values('month_avg')
-    # tmp = group_info[(group_info['increase']==0)].sort_values('year_avg')
-    # tmp = group_info.loc[list(self.record.index)]
-    # tmp = group_info.sort_values('year_avg')
     y = year_increase[tmp.index].T
     y.columns = [i+'_y' for i in y.columns]
     m = month_increase[tmp.index].T
     m.columns = [i+'_m' for i in m.columns]
     v = get_volume(tmp.index, '110/06')
     tmp = pd.concat([tmp, m, y, v], axis=1)
-    # print(tmp.iloc[:10])
+    print(tmp.describe().drop(columns=['state', 'increase', 'target_price']))
+    print(tmp[tmp['prod']>10])
+    """
+    # tmp = group_info[(group_info['increase']==0)].sort_values('year_avg')
+    tmp = group_info.loc[list(self.record.index)]
+    print(tmp.iloc[:10])
     # print(tmp[(tmp['volume'] < 300) & (tmp['state']==2)])
-    print(tmp[tmp['year_avg'] < 10])
+    # print(tmp[tmp['year_avg'] < 10])
 
     # print(group_info.sort_values('month_avg'))  
     # .sort_values('high', ascending=False)
+    """
+
+  def revenue_highlight(self, year, month):
+    year = year-1911 if year > 1911 else year
+    filename = "data/月營收/{}_{}_{}.csv".format(year, month, 'sii')
+    msg = []
+
+    date = []
+    for i in range(3):
+      date.append("{}/{}".format(year, month))
+      year = year if month!=1 else year-1
+      month = month-1 if month!=1 else 12
+    
+    if not os.path.isfile(filename):
+      return "無此資料"
+
+
+    year_increase = by_stock(date, self.stocks.index, '營業收入-去年同月增減(%)', 'sii')
+    month_increase = by_stock(date, self.stocks.index, '營業收入-上月比較增減(%)', 'sii')
+    rev = by_stock(date[:1], self.stocks.index, '營業收入-當月營收', 'sii')
+
+    year_prod = (year_increase/100+1).prod()
+    month_prod = (month_increase/100+1).prod()
+    increase_prod = pd.concat([year_prod, month_prod, year_prod*month_prod, rev.T], axis=1).round(2)
+    increase_prod.columns = ['year_prod', 'month_prod', 'prod', 'rev']
+    group_info = pd.concat([self.stocks, increase_prod], axis=1)
+    # tmp = group_info[(group_info['year_prob']<1)|(group_info['month_prob']<1)].sort_values('month_prob')
+    tmp = group_info.sort_values('prod', ascending=False)
+    tmp = tmp[tmp['prod']>10]
+    
+    y = year_increase[tmp.index].T
+    y.columns = [i+'_y' for i in y.columns]
+    m = month_increase[tmp.index].T
+    m.columns = [i+'_m' for i in m.columns]
+    v = get_volume(tmp.index, '110/06')
+    tmp = pd.concat([tmp, m, y, v], axis=1)
+    # tmp_des = tmp.describe().drop(columns=['state', 'increase', 'target_price'])
+    # print(tmp.describe().drop(columns=['state', 'increase', 'target_price']))
+    # print(tmp)
+    rank = pd.concat([tmp[x].rank(method='min', ascending=False) for x in ['prod', date[0]+'_y', date[0]+'_m', 'rev']], axis=1)
+    rank.columns = ['增幅', '年增', '月增', '營收']
+    name = by_stock(date[:1], rank.index, '公司名稱', 'sii')
+    name.index = ['_']
+    rank = pd.concat([name.T, rank, tmp[['prod',date[0]+'_y', date[0]+'_m' ,'rev']]], axis=1)
+    rank = rank[(rank[['增幅', '年增', '月增', '營收']]<=6).sum(axis=1)>0]
+
+    filename = "data/file/rev_highlight_" + filename.split('/')[-1]
+    rank.to_csv(filename, index_label='stock')
+    logger.info("save {}".format(filename))
+
+    # fmt = ['{:10s}'.format, '{:4.2f}'.format]
+    msg.append('{} 營收排名 ({})\n'.format(date[0], len(rank)))
+    msg.append('增幅\n'+rank[['_', 'prod']].to_string(justify='center', header=False))
+    msg.extend(['\n\n{}\n'.format(x) +
+                rank.sort_values(x)[['_', y]][:6].to_string(justify='center', header=False) 
+                for x, y in zip(['年增', '月增', '營收'], [date[0]+'_y', date[0]+'_m', 'rev'])])
+
+    # print('\n'.join(msg))
+    return '\n'.join(msg)
 
 
 if __name__ == '__main__':
   g = Group()
-  g.show_group_info(2021, 5)
+  # g.show_group_info(2021, 5)
+  g.revenue_highlight(2021, 5)
 
