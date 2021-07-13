@@ -3,6 +3,7 @@ from telegram.ext import MessageHandler, Filters
 from datetime import date
 import subprocess
 import json
+import os
 
 from telegram.files.document import Document
 
@@ -76,6 +77,7 @@ def send_alert(context: CallbackContext):
     g = Group()
     # g.show_alert(today.year, today.month, today.day)
     g.read_alert_and_rev()
+    os.system("cp data/file/rev_alert_sii.csv data/alert/alert_{}_{}_{}.csv".format(today.year, today.month, today.day))
 
     for i in parm['vaild_id']:
       context.bot.send_document(chat_id=i, document=open("data/file/rev_alert_sii.csv", 'rb'), filename="alert_{}_{}_{}.csv".format(today.year, today.month, today.day))
