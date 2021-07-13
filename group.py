@@ -227,8 +227,8 @@ class Group:
         return None
       a = "{}".format(stock)
 
-      if s.MA_long_sort(): 
-        a += ",均線多頭排列"
+      if s.MA_long_sort() and s.MA_go_up(): 
+        a += ",均線多頭排列且五日均上揚"
       else: a += ","
 
       if s.up_MA(3, 5): 
@@ -239,7 +239,7 @@ class Group:
         a += ",收在三均之上"
       else: a += ","
 
-      if s.MA_go_up():
+      if s.MA_break_up():
         a += ",短均向上突破"
       else: a += ","
 

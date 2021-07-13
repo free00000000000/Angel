@@ -79,13 +79,18 @@ class Stock:
   def up_3_ma(self):
     return self.close[-1] > self.MA(5) and self.close[-1] > self.MA(10) and self.close[-1] > self.MA(20)
   
-  def MA_go_up(self):
+  def MA_break_up(self):
     if self.MA(5) > self.MA(10) and self.MA(5, -2) <= self.MA(10, -2):
       return True
     if self.MA(5) > self.MA(20) and self.MA(5, -2) <= self.MA(20, -2):
       return True
     # if self.MA(10) > self.MA(20) and self.MA(10, -2) <= self.MA(20, -2):
     #   return True
+    return False
+
+  def MA_go_up(self):
+    if self.MA(5) > self.MA(5, -2):
+      return True
     return False
 
     
@@ -115,7 +120,7 @@ if __name__ == '__main__':
   s = Stock(2618, '110/07/12')
   print(s.close)
   print(s.close[:-1])
-  print(s.MA_go_up())
+  print(s.MA_break_up())
   # s.up_MA(3, 5)
   # show_alert(2021, 7, 7)
   pass
