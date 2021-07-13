@@ -50,12 +50,12 @@ class Stock:
 
 
   def up_MA(self, days, ma):
-    # for i in range(days):
-    #   if self.close[-1-i] < self.MA(5)
-    if sum(self.close[-days:] >= self.MA(ma)) == days:
-      logger.info("連{}日上{}均 |{}".format(days, ma, self.stock))
-      return True
-    return False
+    for i in range(days):
+      if self.close[-1-i] < self.MA(5, -1-i):
+        return False
+    logger.info("連{}日上{}均 |{}".format(days, ma, self.stock))
+    return True
+    
 
   # def min_volume(self, days):
   #   return self.volume[-days:].min() > 500
@@ -63,11 +63,12 @@ class Stock:
   # def down_MA(self, days, ma):
   #   return sum(self.price.iloc[-days:]['收盤價'] < self.MA(ma)) == days
 
-  def MA(self, n, d=None):
-    if d == None:
+  def MA(self, n, d=-1):
+    # d:-1(今天) -2(昨天) ...
+    if d == -1:
       return self.close[-n:].mean()
     else:
-      return self.close[-n+d:d].mean()
+      return self.close[-n+d+1:d+1].mean()
 
   def MA_long_sort(self):
     ma5 = self.MA(5)
@@ -79,12 +80,12 @@ class Stock:
     return self.close[-1] > self.MA(5) and self.close[-1] > self.MA(10) and self.close[-1] > self.MA(20)
   
   def MA_go_up(self):
-    if self.MA(5) > self.MA(10) and self.MA(5, -1) <= self.MA(10, -1):
+    if self.MA(5) > self.MA(10) and self.MA(5, -2) <= self.MA(10, -2):
       return True
-    if self.MA(5) > self.MA(20) and self.MA(5, -1) <= self.MA(20, -1):
+    if self.MA(5) > self.MA(20) and self.MA(5, -2) <= self.MA(20, -2):
       return True
-    if self.MA(10) > self.MA(20) and self.MA(10, -1) <= self.MA(20, -1):
-      return True
+    # if self.MA(10) > self.MA(20) and self.MA(10, -2) <= self.MA(20, -2):
+    #   return True
     return False
 
     
@@ -111,7 +112,10 @@ def show_alert(year, month, day):
   return '\n'.join(msg)
 
 if __name__ == '__main__':
-  # s = Stock(1101, '110/01/11')
+  s = Stock(2618, '110/07/12')
+  print(s.close)
+  print(s.close[:-1])
+  print(s.MA_go_up())
   # s.up_MA(3, 5)
-  show_alert(2021, 7, 7)
+  # show_alert(2021, 7, 7)
   pass

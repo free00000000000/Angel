@@ -275,7 +275,7 @@ if __name__ == '__main__':
   # g.show_group_info(2021, 5)
   # g.revenue_highlight(2021, 6)
   # g.check_buy(2021, 7, 9)
-  # g.show_alert(2021, 7, 12)
+  g.show_alert(2021, 7, 12)
   g.read_alert_and_rev()
 
 
