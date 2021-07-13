@@ -27,9 +27,11 @@ def update():
     # 更新觀察股的股價
     update_stock_price(list(g.stocks.index))
 
-    # show_alert(now.year, now.month, now.day)  # 買賣訊號提醒
+    g.show_alert(now.year, now.month, now.day)  # 買賣訊號提醒
+    # --- 策略 start ---
     g.check_buy(now.year, now.month, now.day)
     g.check_sell(now.year, now.month, now.day)
+    # --- 策略 end ---
     # g.update_target_price(now.year, now.month, now.day)
 
 

@@ -3,6 +3,7 @@ import os
 from revenue import get_target, by_stock, get_volume
 from alert import Stock
 from log import setup_logger
+import datetime
 
 logger = setup_logger('group_logger', './data/log/group.log')
 to_bot = setup_logger('bot', './data/log/to_bot.log')
@@ -30,7 +31,7 @@ class Group:
 
   def check_buy(self, year, month, day):
     # 買點推薦 (跟訊號分開)
-    year -= 1911
+    year = year - 1911 if year>1911 else year
     date = "{}/{:02d}/{:02d}".format(year, month, day)
     stocks_wait = self.stocks[self.stocks['state']!=2].index
     for sn in stocks_wait:
@@ -71,7 +72,7 @@ class Group:
     self.stocks.to_csv(self.group_file, index_label='stock')
     self.record.to_csv(self.record_file, index_label='stock')
 
-    to_bot.info("End ")
+    logger.info("End ")
     
 
   def check_sell(self, year, month, day):
@@ -170,7 +171,6 @@ class Group:
     if not os.path.isfile(filename):
       return "無此資料"
 
-
     year_increase = by_stock(date, self.stocks.index, '營業收入-去年同月增減(%)', 'sii')
     month_increase = by_stock(date, self.stocks.index, '營業收入-上月比較增減(%)', 'sii')
     rev = by_stock(date[:1], self.stocks.index, '營業收入-當月營收', 'sii')
@@ -182,13 +182,14 @@ class Group:
     group_info = pd.concat([self.stocks, increase_prod], axis=1)
     # tmp = group_info[(group_info['year_prob']<1)|(group_info['month_prob']<1)].sort_values('month_prob')
     tmp = group_info.sort_values('prod', ascending=False)
-    tmp = tmp[tmp['prod']>10]
+    # tmp = tmp[tmp['prod']>10]
     
     y = year_increase[tmp.index].T
     y.columns = [i+'_y' for i in y.columns]
     m = month_increase[tmp.index].T
     m.columns = [i+'_m' for i in m.columns]
-    v = get_volume(tmp.index, '110/06')
+    t = datetime.date.today()
+    v = get_volume(tmp.index, '{}/{:02d}'.format(t.year-1911, t.month))
     tmp = pd.concat([tmp, m, y, v], axis=1)
     # tmp_des = tmp.describe().drop(columns=['state', 'increase', 'target_price'])
     # print(tmp.describe().drop(columns=['state', 'increase', 'target_price']))
@@ -197,10 +198,11 @@ class Group:
     rank.columns = ['增幅', '年增', '月增', '營收']
     name = by_stock(date[:1], rank.index, '公司名稱', 'sii')
     name.index = ['_']
-    rank = pd.concat([name.T, rank, tmp[['prod',date[0]+'_y', date[0]+'_m' ,'rev']]], axis=1)
+    rank = pd.concat([name.T, rank, tmp[['prod',date[0]+'_y', date[0]+'_m' ,'rev', 'volume']]], axis=1)
+    rank.to_csv('data/file/rev_all_sii.csv', index_label='stock')
     rank = rank[(rank[['增幅', '年增', '月增', '營收']]<=6).sum(axis=1)>0]
 
-    filename = "data/file/rev_highlight_" + filename.split('/')[-1]
+    filename = "data/file/rev_highlight_sii.csv"
     rank.to_csv(filename, index_label='stock')
     logger.info("save {}".format(filename))
 
@@ -214,9 +216,66 @@ class Group:
     # print('\n'.join(msg))
     return '\n'.join(msg)
 
+  def show_alert(self, year, month, day):
+    year = year - 1911 if year>1911 else year
+    date = "{}/{:02d}/{:02d}".format(year, month, day)
+
+    def check_alert(stock):
+      try: s = Stock(stock, date)
+      except Exception as e:
+        logger.error("{} |{}".format(e, stock))
+        return None
+      a = "{}".format(stock)
+
+      if s.MA_long_sort(): 
+        a += ",均線多頭排列"
+      else: a += ","
+
+      if s.up_MA(3, 5): 
+        a += ",連三日上五日均"
+      else: a += ","
+
+      if s.up_3_ma():
+        a += ",收在三均之上"
+      else: a += ","
+
+      if s.MA_go_up():
+        a += ",短均向上突破"
+      else: a += ","
+
+      if s.large_volume():
+        a += ",爆量"
+      else: a += ","
+
+      if s.up(4):
+        a += ",強勢"
+      else: a += ","
+      
+      return a
+
+    alert = list(self.stocks.index.map(lambda x: check_alert(x)))
+
+    with open('data/file/alert_sii.csv', 'w') as f:
+      f.write('\n'.join(alert))
+    
+    # to_bot.info("End ")
+
+
+  def read_alert_and_rev(self):
+    alert = pd.read_csv('data/file/alert_sii.csv', header=None, index_col=0)
+    rev = pd.read_csv('data/file/rev_all_sii.csv', index_col='stock')
+
+    alert = alert.dropna(how='all')
+
+    df = pd.concat([rev.loc[alert.index], alert], axis=1).sort_values('增幅')
+    df.to_csv('data/file/rev_alert_sii.csv', index_label='stock')
 
 if __name__ == '__main__':
   g = Group()
   # g.show_group_info(2021, 5)
-  g.revenue_highlight(2021, 5)
+  # g.revenue_highlight(2021, 6)
+  # g.check_buy(2021, 7, 9)
+  # g.show_alert(2021, 7, 12)
+  g.read_alert_and_rev()
+
 

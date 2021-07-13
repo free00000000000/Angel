@@ -50,6 +50,8 @@ class Stock:
 
 
   def up_MA(self, days, ma):
+    # for i in range(days):
+    #   if self.close[-1-i] < self.MA(5)
     if sum(self.close[-days:] >= self.MA(ma)) == days:
       logger.info("連{}日上{}均 |{}".format(days, ma, self.stock))
       return True
@@ -61,8 +63,32 @@ class Stock:
   # def down_MA(self, days, ma):
   #   return sum(self.price.iloc[-days:]['收盤價'] < self.MA(ma)) == days
 
-  def MA(self, n):
-    return self.close[-n:].mean()
+  def MA(self, n, d=None):
+    if d == None:
+      return self.close[-n:].mean()
+    else:
+      return self.close[-n+d:d].mean()
+
+  def MA_long_sort(self):
+    ma5 = self.MA(5)
+    ma10 = self.MA(10)
+    ma20 = self.MA(20)
+    return ma5 > ma10 and ma10 > ma20 
+
+  def up_3_ma(self):
+    return self.close[-1] > self.MA(5) and self.close[-1] > self.MA(10) and self.close[-1] > self.MA(20)
+  
+  def MA_go_up(self):
+    if self.MA(5) > self.MA(10) and self.MA(5, -1) <= self.MA(10, -1):
+      return True
+    if self.MA(5) > self.MA(20) and self.MA(5, -1) <= self.MA(20, -1):
+      return True
+    if self.MA(10) > self.MA(20) and self.MA(10, -1) <= self.MA(20, -1):
+      return True
+    return False
+
+    
+    
 
 def show_alert(year, month, day):
   year = year-1911 if year > 1911 else year

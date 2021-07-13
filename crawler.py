@@ -58,7 +58,7 @@ def get_revenue(year, month, category='sii'):
     return False
   
   logger.info("New {}_{}_{} ".format(year, month, category))
-  to_bot.info("New {}_{}_{} ".format(year, month, category))
+  # to_bot.info("New {}_{}_{} ".format(year, month, category))
 
   url = "https://mops.twse.com.tw/server-java/FileDownLoad"
 
