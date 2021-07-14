@@ -258,7 +258,7 @@ class Group:
     with open('data/file/alert_sii.csv', 'w') as f:
       f.write('\n'.join(alert))
     
-    # to_bot.info("End ")
+    to_bot.info("End ")
 
 
   def read_alert_and_rev(self):
@@ -270,12 +270,25 @@ class Group:
     df = pd.concat([rev.loc[alert.index], alert], axis=1).sort_values('增幅')
     df.to_csv('data/file/rev_alert_sii.csv', index_label='stock')
 
+    # return msg
+    df = df[~(df[1].isna()|df[4].isna())]
+    msg = ['均線多頭排列 & 五日均上揚 & 短均向上突破：']
+    for r in df.iterrows():
+      msg.append("{} {}".format(r[0], r[1]['_']))
+    return '\n'.join(msg)
+
 if __name__ == '__main__':
+  
   g = Group()
   # g.show_group_info(2021, 5)
-  # g.revenue_highlight(2021, 6)
   # g.check_buy(2021, 7, 9)
-  g.show_alert(2021, 7, 12)
+  # g.revenue_highlight(2021, 6)
+  
+  # g.show_alert(2021, 7, 12)
   g.read_alert_and_rev()
-
-
+  # df = pd.read_csv("data/file/rev_alert_sii.csv", index_col='stock')
+  # df = df[~(df['1'].isna()|df['4'].isna())]
+  # msg = ['均線多頭排列 & 五日均上揚 & 短均向上突破：']
+  # for r in df.iterrows():
+  #   msg.append("{} {}".format(r[0], r[1]['_']))
+  # print('\n'.join(msg))

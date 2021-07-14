@@ -76,12 +76,13 @@ def send_alert(context: CallbackContext):
 
     g = Group()
     # g.show_alert(today.year, today.month, today.day)
-    g.read_alert_and_rev()
+    msg = g.read_alert_and_rev()
+    
     os.system("cp data/file/rev_alert_sii.csv data/alert/alert_{}_{}_{}.csv".format(today.year, today.month, today.day))
 
     for i in parm['vaild_id']:
+      context.bot.send_message(chat_id=i, text=msg)
       context.bot.send_document(chat_id=i, document=open("data/file/rev_alert_sii.csv", 'rb'), filename="alert_{}_{}_{}.csv".format(today.year, today.month, today.day))
-      # context.bot.send_message(chat_id=i, text=msg)
     logger.info("End ")
 
 def send_rev_highlight(context: CallbackContext):
@@ -111,7 +112,7 @@ dispatcher.add_handler(CommandHandler('alert', get_alert))
 
 job = updater.job_queue
 # job_alert = job.run_repeating(send_alert, interval=5, first=0)
-job_alert = job.run_repeating(send_alert, interval=1800, first=700)
+job_alert = job.run_repeating(send_alert, interval=1800, first=1750)
 job_alert = job.run_repeating(send_rev_highlight, interval=1800, first=0)
 
 updater.start_polling()
