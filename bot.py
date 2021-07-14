@@ -106,7 +106,7 @@ def send_rev_highlight(context: CallbackContext):
 dispatcher = updater.dispatcher
 
 dispatcher.add_handler(CommandHandler('start', start))
-dispatcher.add_handler(CommandHandler('rev', get_rev_highlight))
+# dispatcher.add_handler(CommandHandler('rev', get_rev_highlight))
 dispatcher.add_handler(CommandHandler('alert', get_alert))
 
 job = updater.job_queue
