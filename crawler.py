@@ -4,6 +4,7 @@ import time
 import os
 from datetime import date
 from tqdm import tqdm
+import io
 from log import setup_logger
 
 logger = setup_logger('crawler_logger', './data/log/crawler.log')
@@ -47,11 +48,49 @@ def update_stock_price(stocks):
       logger.error("{} |{}".format(e, stock_no))
   logger.info("End ")
 
+def get_stock_price_otc(year, month, stock_no):
+  # year: 民國
+  date = '{}/{:02d}'.format(year, month)
+  url = 'https://www.tpex.org.tw/web/stock/aftertrading/daily_trading_info/st43_download_UTF-8.php?l=zh-tw&d={}&stkno={}&s=0,asc,0'.format(date, stock_no)
+  r = requests.get(url, allow_redirects=True)
+  text = r.text.replace(' ', '').split('\n')[4:-1]
+  df = pd.read_csv(io.StringIO('\n'.join(text)))
+  df['成交仟元'] = df['成交仟元'].astype(str)
+  df['成交仟元'] = df['成交仟元'].str.replace(',', '')
+
+  return df.drop(['漲跌'], axis=1)
+
+def update_stock_price_otc(stocks, year, month):
+  logger.info("start")
+  for stock_no in tqdm(stocks):
+    try:
+      filename = "./data/股價/{}.csv".format(stock_no)
+      today = date.today()
+
+      if os.path.isfile(filename):
+        df = pd.read_csv(filename)
+        y, m, d = [int(i) for i in df.iloc[-1]['日期'].split('/')]
+        if today.day == d and today.month == m and today.year == y+1911:
+          continue
+        new = get_stock_price_otc(year, month, stock_no)
+        result = pd.concat([df, new])
+        result.drop_duplicates(subset=['日期'], keep='last', inplace=True)
+        result.to_csv(filename, index=False)
+      
+      else:
+        new = get_stock_price_otc(year, month, stock_no)
+        new.to_csv(filename, index=False)
+      
+      time.sleep(10)
+    except Exception as e:
+      logger.error("{} |{}".format(e, stock_no))
+  logger.info("End ")
+
 
 
 def get_revenue(year, month, category='sii'):
   # category: sii/otc
-  year -= 1911
+  year = year-1911 if year>1911 else year
   filename = "./data/月營收/{}_{}_{}.csv".format(year, month, category)
   if os.path.isfile(filename):  # 不更新營收
     print(filename, "ok")
@@ -92,4 +131,6 @@ def get_revenue(year, month, category='sii'):
 
 if __name__ == '__main__':
 
-  update_stock_price(1101)
+  # get_revenue(110, 6, 'otc')
+  update_stock_price_otc([3465], 110, 7)
+  # get_stock_price_otc(110, 7, 3465)

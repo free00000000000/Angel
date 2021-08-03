@@ -271,8 +271,10 @@ class Group:
     df.to_csv('data/file/rev_alert_sii.csv', index_label='stock')
 
     # return msg
+    # 推薦: 均線多頭排列 & 五日均上揚 & 短均向上突破 & prod>2.5
     df = df[~(df[1].isna()|df[4].isna())]
-    msg = ['均線多頭排列 & 五日均上揚 & 短均向上突破：']
+    df = df[df['prod']>2.5]
+    msg = ['推薦:'] 
     for r in df.iterrows():
       msg.append("{} {}".format(r[0], r[1]['_']))
     return '\n'.join(msg)
@@ -284,8 +286,9 @@ if __name__ == '__main__':
   # g.check_buy(2021, 7, 9)
   # g.revenue_highlight(2021, 6)
   
-  # g.show_alert(2021, 7, 12)
-  g.read_alert_and_rev()
+  g.show_alert(2021, 7, 27)
+  msg = g.read_alert_and_rev()
+  print(msg)
   # df = pd.read_csv("data/file/rev_alert_sii.csv", index_col='stock')
   # df = df[~(df['1'].isna()|df['4'].isna())]
   # msg = ['均線多頭排列 & 五日均上揚 & 短均向上突破：']

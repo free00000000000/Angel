@@ -61,7 +61,8 @@ def get_alert(update, context):
 
   g = Group()
   g.show_alert(year, month, day)
-  g.read_alert_and_rev()
+  msg = g.read_alert_and_rev()
+  context.bot.send_message(chat_id=update.effective_chat.id, text=msg)
   context.bot.send_document(chat_id=update.effective_chat.id, document=open("data/file/rev_alert_sii.csv", 'rb'), filename="alert_{}_{}_{}.csv".format(year, month, day))
 
 
@@ -112,8 +113,8 @@ dispatcher.add_handler(CommandHandler('alert', get_alert))
 
 job = updater.job_queue
 # job_alert = job.run_repeating(send_alert, interval=5, first=0)
-job_alert = job.run_repeating(send_alert, interval=1800, first=1750)
-job_alert = job.run_repeating(send_rev_highlight, interval=1800, first=0)
+job_alert = job.run_repeating(send_alert, interval=3600, first=700)
+job_alert = job.run_repeating(send_rev_highlight, interval=3600, first=0)
 
 updater.start_polling()
 updater.idle()
