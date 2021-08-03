@@ -82,10 +82,10 @@ class Stock:
   def MA_break_up(self):
     if self.MA(5) > self.MA(10) and self.MA(5, -2) <= self.MA(10, -2):
       return True
-    if self.MA(5) > self.MA(20) and self.MA(5, -2) <= self.MA(20, -2):
+    if self.MA(5) > self.MA(28) and self.MA(5, -2) <= self.MA(28, -2):
       return True
-    # if self.MA(10) > self.MA(20) and self.MA(10, -2) <= self.MA(20, -2):
-    #   return True
+    if self.MA(10) > self.MA(28) and self.MA(10, -2) <= self.MA(28, -2):
+      return True
     return False
 
   def MA_go_up(self):
