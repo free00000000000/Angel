@@ -22,6 +22,7 @@ def update():
     rev_year = now.year if not rev_month == 12 else now.year-1
 
     if get_revenue(rev_year, rev_month):  # 有新的營收
+      get_revenue(rev_year, rev_month, 'otc')
       g.update(rev_year, rev_month)  # 更新觀察股
     
     # 更新觀察股的股價
